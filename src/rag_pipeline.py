@@ -11,9 +11,35 @@ client = genai.Client(api_key=api_key)
 # 2. 벡터 DB 연결 (저장된 문서 가져오기)
 db_path = os.path.join(os.path.dirname(__file__), '..', 'chroma_db')
 chroma_client = chromadb.PersistentClient(path=db_path)
-collection = chroma_client.get_collection(name="alteon_collection")
+
+def get_collection():
+    try:
+        return chroma_client.get_collection(name="alteon_collection")
+    except Exception:
+        # DB가 없을 경우 자동으로 alteon_guide.txt 문서를 읽어 DB 구축
+        file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'alteon_guide.txt')
+        collection = chroma_client.get_or_create_collection(name="alteon_collection")
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                text = f.read()
+            chunk_size = 400
+            chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+            for i, chunk in enumerate(chunks):
+                response = client.models.embed_content(
+                    model='gemini-embedding-2',
+                    contents=chunk,
+                )
+                embedding = response.embeddings[0].values
+                collection.upsert(
+                    ids=[f"chunk_{i}"],
+                    embeddings=[embedding],
+                    documents=[chunk],
+                    metadatas=[{"source": "alteon_guide.txt", "chunk_index": i}]
+                )
+        return collection
 
 def ask_rag(query: str) -> str:
+    collection = get_collection()
     # 3. 사용자 질문을 임베딩(벡터화)
     response = client.models.embed_content(
         model='gemini-embedding-2',
