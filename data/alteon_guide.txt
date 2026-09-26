@@ -1,0 +1,61 @@
+Alteon Web Switch Administration Guide
+
+1. 스위치 관리 기능
+- CLI(command line interface) 기능: 최초 셋업 시 사용, 콘솔, 텔넷 접속
+- Web UI 기능: 웹브라우저 상에 URL에 http://알테온의 IP 주소 (예, http://176.12.1.1)
+- SNMP 지원: 알테온 Private MIB 제공
+- RMON 지원
+
+2. Layer 2
+- 포트 Trunking: 지원 가능 트렁크 그룹 수 4개. 각 그룹 당 트렁크 지원 가능 포트 수 (10/100 Fast Ethernet: 6개, Giga Ethernet: 4개)
+- VLANs 지원: 지원 가능 VLAN 수 256, IEEE 802.1Q 지원
+- Spanning Tree 지원
+- 포트 미러링
+
+3. Layer 4
+- 서버 로드 밸런싱(Server Load Balancing)
+- 필터링(Filtering)
+- 어플리케이션 리다이렉션(Application Redirection)
+- 글로벌 서버 로드 밸런싱(Global Server Load Balancing)
+- 대역폭 관리(Bandwidth Management)
+
+4. Layer 5~7
+- Contents 기반의 지능형 서버 로드 밸런싱 (Content-Intelligent Load Balancing)
+- Contents 기반의 지능형 웹 Cache 리다이렉션 (Content-Intelligent Web Cache Redirection)
+
+Layer 4 스위칭이란?!
+- Layer 2 스위칭: 스위칭의 결정 요소가 Mac 주소가 된다. (스위치의 FDB 테이블 참조)
+- Layer 4 스위칭: 스위칭의 결정 요소가 서비스 타입(Port)이 된다. VIP로 오는 http트래픽인 경우 리얼서버 중 하나로 스위칭한다.
+
+기본 설정 사항
+- 명령어 체계: 글로벌 커멘드 (help, up, print, pwd, diff, apply, save 등)
+- 시스템 기본설정: /cfg/sys 메뉴에서 날짜, 시간, 웹포트, 텔넷 허용 옵션 등 설정
+- 스위치 IP 설정: /cfg/ip/if 1 에서 addr, mask, broad, vlan 설정 및 ena로 활성화
+- 스위치 게이트웨이 설정: /cfg/ip/gw 1 에서 addr 설정 및 ena로 활성화. 로드밸런싱 정책은 strict/roundrobin이 있다.
+
+SLB (Server Load Balancing)
+- 장점: 성능 향상, 용이한 확장성 보장, 서버의 효율성 증가, 서버의 보안성 향상, 고 가용성
+- 작동 원리: SLB의 핵심 개념은 Session ID(클라이언트의 IP와 TCP 포트 번호의 조합). Session ID 대치 기능이 작동함 (NAT와 유사).
+- 가상 IP 주소(VIP): 실제 해당서비스에 대하여 외부의 클라이언트가 보게 되는 IP 주소.
+- 로드 밸런싱 정책 (Metric):
+  1) Load-based 알고리즘 (LeastConns, RoundRobin)
+  2) Persistence-based 알고리즘 (Hashing, Minmiss)
+- 설정 명령어:
+  리얼서버 설정: /cfg/slb/real 1
+  리얼서버 그룹 설정: /cfg/slb/gr 1
+  가상서버 설정: /cfg/slb/vi 1
+  가상서버 서비스 설정: /cfg/slb/vi 1/service http
+
+WCR (Web Cache Redirection)
+- 과거의 일반적인 Cache 솔루션과는 다른 개념으로 일반 사용자들은 Cache의 존재여부에 대하여 설정을 할 필요가 없음.
+- 알테온 솔루션의 특징: Transparent Cache 기능 (HTTP 요청에 대해서만 중간에서 가로채 지정된 Cache로 돌려준다).
+- 설정 명령어: 필터 적용 (/cfg/slb/fil 100), 필터 활성화(adv, action, group, rport, ena).
+
+FWLB (Firewall Load Balancing)
+- 장점: 성능 향상(256개의 FWLB 지원), 가용성(Active-Active), 투명함, 플랫폼 독립적.
+- 개념: 화이어 월 서버의 로드 밸런싱이 아니라 두개의 경로에 대한 로드 밸런싱. 스위치는 설정된 정적 라우팅을 사용하여 강제로 트래픽을 동일한 경로로 보낸다. Hash 정책을 사용(SIP, DIP 변수).
+- 설정 절차: 스위치 인터페이스 설정, VLAN 설정, 리얼 서버/그룹 설정, IP 포워딩 설정(/cfg/ip/frwd on), 트래픽 리다이렉션 필터 설정.
+
+VRRP (Virtual Router Redundancy Protocol)
+- 스위치에 대한 리던던시(Redundancy)를 제공한다. Cisco의 HSRP와 유사한 개념.
+- 구성 가능 형태: Hot-Standby, Active-Standby, Active-Active.

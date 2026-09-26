@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+ENV/
+
+# Environments
+.env
+
+# ChromaDB
+chroma_db/
+.env
+deploy.zip
+.env
+deploy.zip
+.venv
