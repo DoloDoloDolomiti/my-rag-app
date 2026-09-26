@@ -6,6 +6,12 @@ from dotenv import load_dotenv
 # 1. 환경 설정 및 API 연결
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    try:
+        import streamlit as st
+        api_key = st.secrets.get("GOOGLE_API_KEY")
+    except Exception:
+        pass
 client = genai.Client(api_key=api_key)
 
 # 2. 벡터 DB 연결 (저장된 문서 가져오기)
