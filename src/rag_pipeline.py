@@ -74,13 +74,22 @@ def ask_rag(query: str) -> str:
 {query}
 """
 
-    # 6. Gemini에게 프롬프트 전송 및 답변 받기
-    answer = client.models.generate_content(
-        model='gemini-flash-latest',
-        contents=prompt
-    )
+    # 6. Gemini에게 프롬프트 전송 및 답변 받기 (503 에러 대비 모델 폴백 처리)
+    models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest']
     
-    return answer.text
+    last_error = None
+    for model_name in models_to_try:
+        try:
+            answer = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
+            return answer.text
+        except Exception as e:
+            last_error = e
+            continue
+            
+    raise last_error
 
 if __name__ == "__main__":
     # 질문 예시 1: SLB란?
